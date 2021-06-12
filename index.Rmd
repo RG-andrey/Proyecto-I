@@ -1,0 +1,114 @@
+---
+title: "Proyecto 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+## Bibliotecas
+library(ggplot2)
+library(dplyr)
+library(hrbrthemes)
+library(gridExtra)
+library(grid)
+library(tidyr)
+```
+A continuación se limpia la base de datos y se establecen las variables.
+```{r}
+datos_climaticos <- read.csv("liberia_datos_climaticos.csv",
+                       sep = ",",
+                       na.strings = "", 
+                       dec = ",")
+
+datos_climaticos <- na.omit(datos_climaticos)
+
+datos_climaticos$Temperatura..Celsius. <- as.numeric(datos_climaticos$Temperatura..Celsius.)
+
+datos_climaticos <-
+  datos_climaticos %>%
+  rename(HumedadR = "HumedadRelativa....",
+         V.Viento = "VelocidadViento..m.s.",
+         Lluvia = "Lluvia..mm.",
+         Irradiacion = "Irradiacion..W.m2.",
+         EvapTransp = "EvapoTranspiracion..mm.",
+         TempCelcius = "Temperatura..Celsius.",
+         Fecha = "Date"
+  )
+
+datos_climaticos <-
+  datos_climaticos %>%
+  mutate(Fecha = as.Date(Fecha, format = "%d/%m/%Y"))
+
+```
+# Gráfico de Histogramas
+```{r}
+a<- ggplot(datos_climaticos,aes(x=HumedadR,group = 1))+geom_histogram(binwidth = 2, 
+                                                                          color = "#666633",
+                                                                          fill = "#CCFFFF")+xlab("Humedad(%)")
+                                                                    
+b<- ggplot(datos_climaticos, aes(x= V.Viento, group = 1))+geom_histogram(binwidth = 2,
+                                                                                color = "gray",
+                                                                                fill = "#CC99FF")+xlab("V.Viento(m/s)")
+c<- ggplot(datos_climaticos, aes(x= Lluvia, group = 1))+geom_histogram(binwidth = 2,
+                                                                       color = "#0000FF",
+                                                                       fill = "#CCFFFF")+xlab("Lluvia(mm)")
+d<- ggplot(datos_climaticos, aes(x= Irradiacion, group = 1))+geom_histogram(binwidth = 2,
+                                                                            color = "#FFFF00",
+                                                                            fill = "gray")+xlab("Irradiación(W/m2)")
+e<- ggplot(datos_climaticos, aes(x= EvapTransp, group = 1))+geom_histogram(binwidth = 2,
+                                                                           color = "#663333",
+                                                                           fill = "gray")+xlab("EvapTransp(mm)")
+f<- ggplot(datos_climaticos, aes(x= TempCelcius, group = 1))+geom_histogram(binwidth = 2,
+                                                                            color = "black",
+                                                                            fill = "red")+xlab("Temperatura(°C)")
+
+grid.arrange(a,b,c,d,e,f,nrow = 3, ncol =2 )
+```
+
+# Gráfico de Lineas
+ Promediar las series a los indicados valores mensuales.
+
+```{r}
+Conjunto_Prome <-
+  datos_climaticos %>%
+  select(Fecha, HumedadR, V.Viento, Lluvia, Irradiacion, EvapTransp, 
+         TempCelcius)%>%
+  mutate(Fecha = as.Date(Fecha, format = "%d/%m/%Y"))%>%
+  group_by (Fecha = format(Fecha,"%m"))%>%
+  summarise(HumedadR = mean(HumedadR), V.Viento = mean(V.Viento), Lluvia = sum(Lluvia),Irradiacion = mean(Irradiacion), 
+            EvapTransp = sum(EvapTransp),
+            TempCelcius = mean(TempCelcius)
+            )
+
+g<- ggplot(Conjunto_Prome,aes(x=Fecha,y=HumedadR,group = 1))+geom_line(color = "black")+xlab("Meses")+ylab("HumedadR(%)")
+h <- ggplot(Conjunto_Prome,aes(x=Fecha,y=V.Viento,group = 1))+geom_line(color = "#CC99FF")+xlab("Meses")+ylab("V.Viento(m/s)")
+i <- ggplot(Conjunto_Prome,aes(x=Fecha,y=Lluvia,group = 1))+geom_line(color = "#0000FF")+xlab("Meses")+ylab("Lluvia(mm)")
+j <- ggplot(Conjunto_Prome,aes(x=Fecha,y=Irradiacion,group = 1))+geom_line(color = "#FFFF00")+xlab("Meses")+ylab("Irradiacion(W/m2)")
+k <- ggplot(Conjunto_Prome,aes(x=Fecha,y=EvapTransp,group = 1))+geom_line(color = "#663333")+xlab("Meses")+ylab("EvapTransp(mm)")
+l <- ggplot(Conjunto_Prome,aes(x=Fecha,y=TempCelcius,group = 1))+geom_line(color ="red")+xlab("Meses")+ylab("Temperatura(°C)")
+
+grid.arrange(g,h,i,j,k,l,nrow = 3, ncol = 2)
+```
+
+# Gráfico de Relación de Variables
+(nubes de puntos)
+```{r}
+m <- ggplot(datos_climaticos,aes(x=Fecha,y=HumedadR,group = 1))+geom_point()+ylab("HumedadR(%)")
+n <- ggplot(datos_climaticos,aes(x=Fecha,y=V.Viento,group = 1))+geom_point()+ylab("V.Viento(m/s)")
+o <- ggplot(datos_climaticos,aes(x=Fecha,y=Lluvia,group = 1))+geom_point()+ylab("Lluvia(mm)")
+p <- ggplot(datos_climaticos,aes(x=Fecha,y=Irradiacion,group = 1))+geom_point()+ylab("Irradiacion(W/m2)")
+q <- ggplot(datos_climaticos,aes(x=Fecha,y=EvapTransp,group = 1))+geom_point()+ylab("EvapTransp(mm)")
+r <- ggplot(datos_climaticos,aes(x=Fecha,y=TempCelcius,group = 1))+geom_point()+ylab("Temperatura(°C)")
+
+grid.arrange(m,n,o,p,q,r,nrow = 3, ncol = 2)
+
+```
+
+
+
+
